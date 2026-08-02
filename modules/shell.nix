@@ -86,6 +86,14 @@
     '';
   };
 
+  # Can't chsh without sudo on this host, so hand off from bash to zsh.
+  programs.bash = {
+    enable = true;
+    initExtra = ''
+      [[ $- == *i* ]] && exec zsh
+    '';
+  };
+
   programs.direnv = {
     enable = true;
     enableZshIntegration = true;

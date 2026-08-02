@@ -66,18 +66,13 @@ nix run --impure .#homeConfigurations.x86_64-linux.activationPackage
 
 On first activation you will be prompted for git name/email (saved to `~/.gitconfig.local`) and an SSH key will be generated — add the printed public key to GitHub under Settings → SSH and GPG keys.
 
-**4. Make zsh your login shell.**
-
-```bash
-command -v zsh | sudo tee -a /etc/shells
-chsh -s "$(command -v zsh)"
-```
-
-**5. Start your configured shell.**
+**4. Start your configured shell.**
 
 ```bash
 exec zsh
 ```
+
+> **No sudo?** If you can't run `chsh` (managed/shared boxes), skip it — home-manager already configures bash to `exec zsh` automatically for every new interactive session. You'll land in zsh on your next login without any manual steps.
 
 **6. Initialise micromamba (one-time per machine).**
 
@@ -111,7 +106,7 @@ nix run --impure .#homeConfigurations.x86_64-linux.activationPackage
 ## Notes
 
 - Uses `release-25.05` for both nixpkgs and home-manager → stable, reproducible, no surprise breaks.
-- Home-manager manages everything under `~/.config`. Don't hand-edit those files — change this repo and re-activate.
+- Home-manager manages `~/.zshrc`, `~/.bashrc`, and everything under `~/.config` as read-only symlinks into the Nix store. Don't hand-edit those files — change this repo and re-activate. To add to `$PATH`, use `home.sessionPath` in `home.nix`.
 - `TERMINFO_DIRS` is set so terminals like Ghostty (`xterm-ghostty`) work correctly over SSH without the remote needing Ghostty installed system-wide.
 - Ghostty is installed on the box too; if the remote has a display (VNC, physical), `ghostty` launches with the same theme/font. On headless boxes it just doesn't run — harmless.
 - `~/.gitconfig.local` and `hosts/` are gitignored — safe to store machine-specific or personal config there.

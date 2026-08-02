@@ -12,6 +12,10 @@
   # Keeps `home-manager` happy; see https://nix-community.github.io/home-manager/options.html#opt-home.stateVersion
   home.stateVersion = "25.05";
 
+  home.sessionPath = [
+    "$HOME/.local/bin"
+  ];
+
   # Everything under ~/.config is managed by home-manager. Don't fight it.
   xdg.enable = true;
 
