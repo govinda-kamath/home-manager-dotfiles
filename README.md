@@ -34,16 +34,10 @@ hosts/<hostname>.nix # optional per-machine overrides (loaded if HOSTNAME matche
 
 ## Setup on a fresh remote machine (Ubuntu etc.)
 
-**1. Ensure nix is available.** If already installed (e.g. on a shared/managed box), source its profile so it's on PATH — otherwise install it.
+**1. Ensure nix is available.** Check if already installed (e.g. on a shared/managed box) using `which nix`. If it's not installed, install it
 
 ```bash
-NIX_PROFILE=/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-if [ -f "$NIX_PROFILE" ]; then
-  . "$NIX_PROFILE"
-else
-  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-fi
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 ```
 
 > With the official (non-Determinate) installer, also enable flakes:
