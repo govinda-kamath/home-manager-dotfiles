@@ -36,6 +36,7 @@ in
     [
       ./modules/shell.nix # zsh with autocomplete/highlighting/dedup history
       ./modules/dev.nix # python, rust, go toolchains
+      ./modules/nvim.nix # neovim with LSP/completion/telescope
       ./modules/ghostty.nix # ghostty terminal + config
       ./modules/git.nix
       ./modules/byobu.nix
