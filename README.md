@@ -34,7 +34,9 @@ hosts/<hostname>.nix # optional per-machine overrides (loaded if HOSTNAME matche
 
 ## Setup on a fresh remote machine (Ubuntu etc.)
 
-**1. Ensure nix is available.** Check if already installed (e.g. on a shared/managed box) using `which nix`. If it's not installed, install it
+**1. Ensure nix is available.** Check if already installed (e.g. on a shared/managed box) using `which nix`. If it's not installed, install it.
+The easiest way to install is using the determinate systems [installer](http://docs.determinate.systems/). As of 1 Aug 2026, the following command
+worked (but please look at the docs before running this).
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
