@@ -8,6 +8,7 @@ Portable dev environment via [home-manager](https://github.com/nix-community/hom
 |---|---|
 | Shell | zsh with autocompletion, autosuggestions, syntax highlighting, dedup'd shared history, nice prompt |
 | Languages | Python (python3 + uv + ruff + pyright), Rust (cargo/rustc/rust-analyzer/rustfmt/clippy), Go (go + gopls + delve) |
+| Editor | Neovim: LSP for py/rust/go, nvim-cmp completion, telescope, neo-tree, treesitter, catppuccin-mocha |
 | Terminal | Ghostty (catppuccin-mocha theme, JetBrains Mono Nerd Font), byobu with auto-start on SSH |
 | Tools | ripgrep, fd, git (aliases + sane defaults), curl, wget, jq, htop, tree |
 
@@ -19,6 +20,7 @@ home.nix             # imports modules; username lives here
 modules/
   shell.nix          # zsh
   dev.nix            # python / rust / go toolchains
+  nvim.nix           # neovim (LSP, completion, telescope, treesitter)
   ghostty.nix        # ghostty + font
   git.nix            # git config (EDIT git user.name/email)
   byobu.nix          # byobu + SSH auto-start
