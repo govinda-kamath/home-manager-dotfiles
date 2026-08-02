@@ -44,6 +44,7 @@
       ./modules/nvim.nix # neovim with LSP/completion/telescope
       ./modules/ghostty.nix # ghostty terminal + config
       ./modules/git.nix
+      ./modules/ssh.nix
       ./modules/byobu.nix
       ./modules/conda.nix
     ]

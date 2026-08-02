@@ -6,81 +6,112 @@ Portable dev environment via [home-manager](https://github.com/nix-community/hom
 
 | Area | Content |
 |---|---|
-| Shell | zsh with autocompletion, autosuggestions, syntax highlighting, dedup'd shared history, nice prompt |
+| Shell | zsh with autocompletion, autosuggestions, syntax highlighting, dedup'd history, git branch + conda env in prompt |
 | Languages | Python (python3 + uv + ruff + pyright), Rust (cargo/rustc/rust-analyzer/rustfmt/clippy), Go (go + gopls + delve) |
 | Editor | Neovim: LSP for py/rust/go, nvim-cmp completion, telescope, neo-tree, treesitter, catppuccin-mocha |
-| Terminal | Ghostty (catppuccin-mocha theme, JetBrains Mono Nerd Font), byobu with auto-start on SSH |
-| Tools | ripgrep, fd, git (aliases + sane defaults), curl, wget, jq, htop, tree |
+| Terminal | Ghostty (catppuccin-mocha theme, JetBrains Mono Nerd Font), byobu (manual start) |
+| Conda | micromamba with base auto-activated; `micromamba activate <env>` for project envs |
+| Git | delta pager, aliases, identity prompted on first activation (stored in `~/.gitconfig.local`) |
+| SSH | ed25519 key auto-generated on first activation; SSH config wired for GitHub |
+| Tools | ripgrep, fd, bat, eza, lazygit, gh, just, dust, ncdu, mosh, direnv, curl, wget, jq, htop |
 
 ## Layout
 
-```
+```text
 flake.nix            # pinned nixpkgs + home-manager (release-25.05), builds for x86_64 & aarch64
-home.nix             # imports modules; username lives here
+home.nix             # imports modules; username injected from $USER at eval time
 modules/
-  shell.nix          # zsh
+  shell.nix          # zsh, direnv, prompt (git branch + conda env)
   dev.nix            # python / rust / go toolchains
   nvim.nix           # neovim (LSP, completion, telescope, treesitter)
-  ghostty.nix        # ghostty + font
-  git.nix            # git config (EDIT git user.name/email)
-  byobu.nix          # byobu + SSH auto-start
+  ghostty.nix        # ghostty + font + xterm-ghostty terminfo fix
+  git.nix            # git config + delta pager; identity via ~/.gitconfig.local
+  ssh.nix            # SSH key generation + GitHub host config
+  byobu.nix          # byobu (installed; start manually with `byobu`)
+  conda.nix          # micromamba + base env auto-activation
 hosts/<hostname>.nix # optional per-machine overrides (loaded if HOSTNAME matches)
 ```
 
 ## Setup on a fresh remote machine (Ubuntu etc.)
 
+**1. Ensure nix is available.** If already installed (e.g. on a shared/managed box), source its profile so it's on PATH — otherwise install it.
+
 ```bash
-# 1. Install nix. Flakes must be enabled; the determinate installer does this
-#    for you. With the official installer, enable them first:
-#      echo 'experimental-features = nix-command flakes' | sudo tee /etc/nix/nix.conf
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-# or (official single-user):
-#   curl -L https://nixos.org/nix/install | sh
+NIX_PROFILE=/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+if [ -f "$NIX_PROFILE" ]; then
+  . "$NIX_PROFILE"
+else
+  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+fi
+```
 
-# 2. New shell (or source the nix env script), then clone this repo
-git clone <your-repo-url> ~/gmk-nix-env && cd ~/gmk-nix-env
+> With the official (non-Determinate) installer, also enable flakes:
+> `echo 'experimental-features = nix-command flakes' | sudo tee /etc/nix/nix.conf`
 
-# 3. Activate (pick the arch matching `uname -m`)
-nix run .#homeConfigurations.gmk-x86_64.activationPackage
-#   ARM box? → .#homeConfigurations.gmk-aarch64.activationPackage
+**2. Clone this repo.**
 
-# 4. Make zsh your login shell (nix zsh must be in /etc/shells first)
+```bash
+git clone git@github.com:govinda-kamath/home-manager-dotfiles.git ~/home-manager-dotfiles
+cd ~/home-manager-dotfiles
+```
+
+**3. Activate.** `--impure` lets nix read `$USER` so the config matches your login name. Pick the arch matching `uname -m`.
+
+```bash
+nix run --impure .#homeConfigurations.x86_64-linux.activationPackage
+# ARM box:
+# nix run --impure .#homeConfigurations.aarch64-linux.activationPackage
+```
+
+On first activation you will be prompted for git name/email (saved to `~/.gitconfig.local`) and an SSH key will be generated — add the printed public key to GitHub under Settings → SSH and GPG keys.
+
+**4. Make zsh your login shell.**
+
+```bash
 command -v zsh | sudo tee -a /etc/shells
 chsh -s "$(command -v zsh)"
+```
 
-# 5. Done — log out and back in (or just start a new zsh).
-#    On SSH login, byobu will auto-start. Your tmux sessions persist across disconnects:
-#      byobu      → attach / create session
-#      Ctrl-a d   → detach
-#      byobu ls   → list sessions
+**5. Start your configured shell.**
+
+```bash
+exec zsh
+```
+
+**6. Initialise micromamba (one-time per machine).**
+
+```bash
+micromamba create -n base python
 ```
 
 ### Updating later
 
 ```bash
-cd ~/gmk-nix-env
+cd ~/home-manager-dotfiles
 nix flake update        # bump pinned inputs to latest release-25.05
-nix run .#homeConfigurations.gmk-x86_64.activationPackage
+nix run --impure .#homeConfigurations.x86_64-linux.activationPackage
 ```
 
 ## Customizing
 
-- **Git identity** → edit `modules/git.nix` (`userName` / `userEmail`).
-- **Machine-specific values** → create `hosts/<hostname>.nix` (use `hostname` to find it). It's auto-imported on that machine only. Example:
+- **Git identity** → prompted automatically on first activation; re-edit `~/.gitconfig.local` any time.
+- **Machine-specific values** → create `hosts/<hostname>.nix` (use `hostname` to find the name). It's auto-imported on that machine only. Example:
 
   ```nix
-  { ... }: {
-    programs.git.userName = "govinda";
-    programs.git.userEmail = "me@work.com";
+  { pkgs, ... }: {
     home.packages = [ pkgs.some-work-tool ];
   }
   ```
 
-- **Adding tools** → add to `home.packages` in `modules/dev.nix` (or `home.nix`).
-- **More machines / different user** → change `username` at the top of `home.nix`.
+- **Adding tools** → add to `home.packages` in `home.nix` or `modules/dev.nix`.
+- **Different username** → the flake reads `$USER` automatically when run with `--impure`. No edits needed.
+- **Byobu** → not auto-started; run `byobu` manually. Sessions persist across SSH disconnects.
 
 ## Notes
 
 - Uses `release-25.05` for both nixpkgs and home-manager → stable, reproducible, no surprise breaks.
-- Home-manager manages everything under `~/.config` on these machines. Don't hand-edit those files — change this repo and re-activate.
+- Home-manager manages everything under `~/.config`. Don't hand-edit those files — change this repo and re-activate.
+- `TERMINFO_DIRS` is set so terminals like Ghostty (`xterm-ghostty`) work correctly over SSH without the remote needing Ghostty installed system-wide.
 - Ghostty is installed on the box too; if the remote has a display (VNC, physical), `ghostty` launches with the same theme/font. On headless boxes it just doesn't run — harmless.
+- `~/.gitconfig.local` and `hosts/` are gitignored — safe to store machine-specific or personal config there.
