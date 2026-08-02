@@ -16,6 +16,15 @@
     "$HOME/.local/bin"
   ];
 
+  # Back up any distro-default dotfiles that would block home-manager's symlinks.
+  home.activation.backupConflictingDotfiles = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    for f in .bashrc .profile; do
+      if [ -e "$HOME/$f" ] && [ ! -L "$HOME/$f" ]; then
+        mv "$HOME/$f" "$HOME/$f.bak"
+      fi
+    done
+  '';
+
   # Everything under ~/.config is managed by home-manager. Don't fight it.
   xdg.enable = true;
 
