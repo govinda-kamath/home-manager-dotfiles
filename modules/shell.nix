@@ -35,8 +35,9 @@
 
     # A few ergonomic aliases
     shellAliases = {
-      ll = "ls -lah";
-      la = "ls -a";
+      ls  = "eza --icons";
+      ll  = "eza -lah --icons --git";
+      la  = "eza -a --icons";
       g = "git";
       gs = "git status";
       gp = "git push";
@@ -46,6 +47,11 @@
     };
 
     initContent = ''
+      # home.sessionVariables are written to ~/.profile (login shells only).
+      # Source them here so TERMINFO_DIRS and friends work in all interactive shells.
+      [[ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]] && \
+        source "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+
       # vi-mode not for everyone; if you want it, uncomment:
       # bindkey -v
 
@@ -62,16 +68,35 @@
       setopt EXTENDED_GLOB
       setopt GLOB_DOTS
 
-      # Prompt: user@hostname in a nice two-line layout
+      # Prompt: user@hostname, git branch, conda env, two-line layout
       setopt PROMPT_SUBST
       precmd() { print -Pn "\e]0;%n@%m %~\a" } # set terminal title
-      PROMPT=$'%(?.%F{green}➜.%F{red}➜)%f %F{cyan}%n@%m%f %F{yellow}%~%f\n%F{blue}❯%f '
+
+      autoload -Uz vcs_info
+      zstyle ':vcs_info:*' enable git
+      zstyle ':vcs_info:git:*' formats ' %F{magenta}[%b]%f'
+
+      _set_prompt() {
+        local conda_part=
+        [[ -n "''${CONDA_DEFAULT_ENV}" ]] && conda_part=" %F{green}(''${CONDA_DEFAULT_ENV})%f"
+        local nl=$'\n'
+        PROMPT="%(?.%F{green}➜.%F{red}➜)%f %F{cyan}%n@%m%f %F{yellow}%~%f''${vcs_info_msg_0_}''${conda_part}''${nl}%F{blue}❯%f "
+      }
+      precmd_functions+=(vcs_info _set_prompt)
     '';
+  };
+
+  programs.direnv = {
+    enable = true;
+    enableZshIntegration = true;
   };
 
   # zsh must be our login shell for the whole setup to feel native.
   # On non-NixOS this needs `chsh -s $(which zsh)` once (see README).
   home.sessionVariables = {
     SHELL = "${pkgs.zsh}/bin/zsh";
+    # ncurses on non-NixOS doesn't search the nix profile by default;
+    # this lets it find terminfo entries like xterm-ghostty from installed packages.
+    TERMINFO_DIRS = "${config.home.profileDirectory}/share/terminfo:/usr/share/terminfo";
   };
 }

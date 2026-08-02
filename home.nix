@@ -2,14 +2,9 @@
   config,
   lib,
   pkgs,
+  username,
   ...
 }:
-
-let
-  # ── EDIT ME: per-machine identity ────────────────────────────────────────
-  username = "gmk";
-  # If different machines need different values, put overrides in ./hosts/<hostname>.nix
-in
 {
   home.username = username;
   home.homeDirectory = "/home/${username}";
@@ -28,6 +23,16 @@ in
     htop
     tree
     file
+    lazygit
+
+    # --- improved CLI tools ---
+    bat      # cat with syntax highlighting
+    eza      # modern ls with colors, icons, git status
+    mosh     # UDP ssh that survives flaky connections
+    ncdu     # interactive disk usage
+    du-dust  # intuitive du replacement
+    gh       # GitHub CLI
+    just     # modern make replacement
 
     # --- languages & toolchains (details in ./modules/dev.nix) ---
   ];
@@ -40,6 +45,7 @@ in
       ./modules/ghostty.nix # ghostty terminal + config
       ./modules/git.nix
       ./modules/byobu.nix
+      ./modules/conda.nix
     ]
     # Load per-host overrides if present (e.g. hosts/somebox.nix)
     ++ (let
